@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  avatar        String?
+  phone         String?
+  address       String?
+  role          Role           @default(USER)
+  cart          Cart?
+  orders        Order[]
+  addresses     Address[]
+  couponUsages  CouponUsage[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String
+  price       Int
+  stock       Int
+  image       String
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+  payments        Payment[]
+  addressId       String?
+  address         Address?      @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  couponId        String?
+  coupon          Coupon?       @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponUsage     CouponUsage?
+  subtotal        Int           @default(0)
+  shippingFee     Int           @default(0)
+  shippingCourier String?
+  shippingService String?
+  shippingEtd     String?
+  discountAmount  Int           @default(0)
+  couponCode      String?
+  totalPrice      Int
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  shippingAddress String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Address {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label              String
+  recipientName      String
+  recipientPhone     String
+  detail             String
+  rajaongkirId       String
+  rajaongkirLabel    String
+  provinceName       String
+  cityName           String
+  districtName       String
+  subdistrictName    String?
+  zipCode            String?
+  isPrimary          Boolean  @default(false)
+  orders             Order[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  price     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  orderId         String
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider        PaymentProvider
+  status          PaymentStatus   @default(UNPAID)
+  amount          Int
+  transactionId   String?
+  paymentToken    String?
+  paymentUrl      String?
+  rawResponse     Json?
+  paidAt          DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id          String        @id @default(cuid())
+  code        String        @unique
+  name        String
+  description String?
+  type        CouponType
+  value       Int
+  minSubtotal Int           @default(0)
+  maxDiscount Int?
+  usageLimit  Int?
+  usedCount   Int           @default(0)
+  isActive    Boolean       @default(true)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  orders      Order[]
+  usages      CouponUsage[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CouponUsage {
+  id             String   @id @default(cuid())
+  couponId       String
+  coupon         Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId        String   @unique
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  couponCode     String
+  discountAmount Int
+  usedAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+  @@unique([couponId, userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  XENDIT
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
