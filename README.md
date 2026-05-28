@@ -117,6 +117,44 @@ Start compiled output:
 npm run start
 ```
 
+## Vercel Deployment
+
+This API includes a Vercel serverless entry at:
+
+```txt
+api/api/index.ts
+```
+
+and a Vercel config at:
+
+```txt
+api/vercel.json
+```
+
+If deploying only the backend, set the Vercel project root directory to:
+
+```txt
+api
+```
+
+Required production environment variables must be added in the Vercel dashboard. Do not upload the local `.env` file.
+
+Important env values:
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `JWT_SECRET`
+- `FRONTEND_URL`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `XENDIT_SECRET_KEY`
+- `XENDIT_CALLBACK_TOKEN`
+- `RAJAONGKIR_API_KEY`
+- `RAJAONGKIR_ORIGIN_ID`
+
+After deploy, test the root URL. It should return the Nexxora API health response.
+
 ## API Areas
 
 Routes are grouped by domain inside `src/routers`:
