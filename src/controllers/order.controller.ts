@@ -13,6 +13,7 @@ import {
   calculateCouponDiscount,
   normalizeCouponCode,
 } from "../utils/coupon";
+import { sendOrderCreatedEmail } from "../utils/email";
 import { getRouteParam } from "../utils/request";
 
 function createOrderNumber() {
@@ -278,6 +279,12 @@ export async function checkoutOrderController(req: Request, res: Response) {
           },
         },
         include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
           orderItems: {
             include: {
               product: true,
@@ -342,6 +349,12 @@ export async function checkoutOrderController(req: Request, res: Response) {
 
       return createdOrder;
     });
+
+    try {
+      await sendOrderCreatedEmail(order.user, order);
+    } catch (emailError) {
+      console.error("Failed to send order email", emailError);
+    }
 
     return res.status(201).json({
       success: true,

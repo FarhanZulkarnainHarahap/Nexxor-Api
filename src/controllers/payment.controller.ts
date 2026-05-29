@@ -6,6 +6,7 @@ import {
 } from "../../prisma/generated/prisma/client";
 import { createXenditInvoice } from "../config/xendit";
 import { prisma } from "../config/prisma";
+import { sendPurchaseSuccessEmail } from "../utils/email";
 import { getRouteParam } from "../utils/request";
 
 type XenditWebhookBody = {
@@ -245,7 +246,25 @@ export async function xenditWebhookController(req: Request, res: Response) {
     const payment = await prisma.payment.findFirst({
       where: paymentWhere,
       include: {
-        order: true,
+        order: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+            orderItems: {
+              include: {
+                product: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -278,6 +297,14 @@ export async function xenditWebhookController(req: Request, res: Response) {
       paymentStatus === PaymentStatus.PAID ? "Payment successful" : "Payment updated",
       `Your Nexxora payment for order ${payment.order.orderNumber} is ${paymentStatus}.`,
     );
+
+    if (paymentStatus === PaymentStatus.PAID && payment.status !== PaymentStatus.PAID) {
+      try {
+        await sendPurchaseSuccessEmail(payment.order.user, payment.order);
+      } catch (emailError) {
+        console.error("Failed to send purchase email", emailError);
+      }
+    }
 
     return res.status(200).json({
       success: true,
