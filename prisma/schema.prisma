@@ -17,7 +17,7 @@ model User {
   phone         String?
   address       String?
   emailVerifiedAt DateTime?
-  emailVerificationToken String?   @unique
+  emailVerificationToken String?
   emailVerificationExpires DateTime?
   role          Role           @default(USER)
   cart          Cart?
