@@ -2,6 +2,7 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import authRouter from "./routers/auth.router";
+import authJsRouter from "./auth/authjs.router";
 import cartRouter from "./routers/cart.router";
 import categoryRouter from "./routers/category.router";
 import couponRouter from "./routers/coupon.router";
@@ -12,10 +13,12 @@ import productRouter from "./routers/product.router";
 import addressRouter from "./routers/address.router";
 import shippingRouter from "./routers/shipping.router";
 import userRouter from "./routers/user.router";
+import marketplaceRouter from "./routers/marketplace.router";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 import { renderApiHome } from "./utils/apiHome";
 
 const app = express();
+app.set("trust proxy", process.env.AUTH_TRUST_HOST === "true");
 const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:3000")
   .split(",")
   .map((origin) => origin.trim())
@@ -56,6 +59,8 @@ app.get(["/", "/api"], (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/auth", authJsRouter);
+app.use("/api/marketplace", marketplaceRouter);
 app.use("/api/products", productRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/coupons", couponRouter);

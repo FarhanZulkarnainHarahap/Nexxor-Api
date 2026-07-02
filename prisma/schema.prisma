@@ -9,24 +9,28 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  password      String
-  avatar        String?
-  phone         String?
-  address       String?
-  emailVerifiedAt DateTime?
-  emailVerificationToken String?
+  id                       String         @id @default(cuid())
+  name                     String
+  email                    String         @unique
+  password                 String
+  avatar                   String?
+  avatarUrl                String?
+  phone                    String?
+  address                  String?
+  profileCompleted         Boolean        @default(true)
+  emailVerified            DateTime?
+  emailVerifiedAt          DateTime?
+  emailVerificationToken   String?
   emailVerificationExpires DateTime?
-  role          Role           @default(USER)
-  cart          Cart?
-  orders        Order[]
-  addresses     Address[]
-  couponUsages  CouponUsage[]
-  notifications Notification[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  role                     Role           @default(USER)
+  cart                     Cart?
+  orders                   Order[]
+  addresses                Address[]
+  couponUsages             CouponUsage[]
+  notifications            Notification[]
+  oauthAccounts            OAuthAccount[]
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
 }
 
 model Category {
@@ -39,19 +43,21 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  slug        String      @unique
-  description String
-  price       Int
-  stock       Int
-  image       String
-  categoryId  String
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String
+  slug                  String                 @unique
+  description           String
+  price                 Int
+  stock                 Int
+  image                 String
+  categoryId            String
+  category              Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  cartItems             CartItem[]
+  orderItems            OrderItem[]
+  marketplaceProducts   MarketplaceProduct[]
+  marketplaceOrderItems MarketplaceOrderItem[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model Cart {
@@ -77,51 +83,192 @@ model CartItem {
 }
 
 model Order {
-  id              String        @id @default(cuid())
-  orderNumber     String        @unique
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems      OrderItem[]
-  payments        Payment[]
-  addressId       String?
-  address         Address?      @relation(fields: [addressId], references: [id], onDelete: SetNull)
-  couponId        String?
-  coupon          Coupon?       @relation(fields: [couponId], references: [id], onDelete: SetNull)
-  couponUsage     CouponUsage?
-  subtotal        Int           @default(0)
-  shippingFee     Int           @default(0)
-  shippingCourier String?
-  shippingService String?
-  shippingEtd     String?
-  discountAmount  Int           @default(0)
-  couponCode      String?
-  totalPrice      Int
-  status          OrderStatus   @default(PENDING)
-  paymentStatus   PaymentStatus @default(UNPAID)
-  shippingAddress String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String            @id @default(cuid())
+  orderNumber      String            @unique
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems       OrderItem[]
+  payments         Payment[]
+  addressId        String?
+  address          Address?          @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  couponId         String?
+  coupon           Coupon?           @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponUsage      CouponUsage?
+  subtotal         Int               @default(0)
+  shippingFee      Int               @default(0)
+  shippingCourier  String?
+  shippingService  String?
+  shippingEtd      String?
+  discountAmount   Int               @default(0)
+  couponCode       String?
+  totalPrice       Int
+  status           OrderStatus       @default(PENDING)
+  paymentStatus    PaymentStatus     @default(UNPAID)
+  shippingAddress  String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  marketplaceOrder MarketplaceOrder?
+}
+
+model OAuthAccount {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          OAuthProvider
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  idToken           String?
+  rawProfile        Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model MarketplaceAccount {
+  id           String               @id @default(cuid())
+  provider     MarketplaceProvider  @unique
+  mode         MarketplaceMode
+  shopId       String
+  shopName     String
+  sellerId     String?
+  fsId         String?
+  isActive     Boolean              @default(true)
+  lastSyncedAt DateTime?
+  rawConfig    Json?
+  products     MarketplaceProduct[]
+  orders       MarketplaceOrder[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model MarketplaceProduct {
+  id                   String                 @id @default(cuid())
+  marketplaceAccountId String
+  marketplaceAccount   MarketplaceAccount     @relation(fields: [marketplaceAccountId], references: [id], onDelete: Cascade)
+  localProductId       String?
+  localProduct         Product?               @relation(fields: [localProductId], references: [id], onDelete: SetNull)
+  provider             MarketplaceProvider
+  marketplaceProductId String
+  marketplaceSku       String?
+  name                 String
+  price                Int
+  stock                Int
+  status               String
+  imageUrl             String?
+  rawData              Json?
+  lastSyncedAt         DateTime?
+  orderItems           MarketplaceOrderItem[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@unique([provider, marketplaceProductId])
+  @@index([marketplaceAccountId])
+  @@index([localProductId])
+}
+
+model MarketplaceOrder {
+  id                   String                 @id @default(cuid())
+  marketplaceAccountId String
+  marketplaceAccount   MarketplaceAccount     @relation(fields: [marketplaceAccountId], references: [id], onDelete: Cascade)
+  localOrderId         String?                @unique
+  localOrder           Order?                 @relation(fields: [localOrderId], references: [id], onDelete: SetNull)
+  provider             MarketplaceProvider
+  marketplaceOrderId   String
+  invoiceNumber        String?
+  buyerName            String?
+  buyerPhone           String?
+  totalAmount          Int
+  orderStatus          String
+  paymentStatus        String?
+  shippingStatus       String?
+  rawData              Json?
+  orderedAt            DateTime?
+  lastSyncedAt         DateTime?
+  items                MarketplaceOrderItem[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@unique([provider, marketplaceOrderId])
+  @@index([marketplaceAccountId])
+}
+
+model MarketplaceOrderItem {
+  id                   String              @id @default(cuid())
+  marketplaceOrderId   String
+  marketplaceOrder     MarketplaceOrder    @relation(fields: [marketplaceOrderId], references: [id], onDelete: Cascade)
+  marketplaceProductId String?
+  marketplaceProduct   MarketplaceProduct? @relation(fields: [marketplaceProductId], references: [id], onDelete: SetNull)
+  localProductId       String?
+  localProduct         Product?            @relation(fields: [localProductId], references: [id], onDelete: SetNull)
+  productName          String
+  sku                  String?
+  quantity             Int
+  price                Int
+  rawData              Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([marketplaceOrderId])
+  @@index([marketplaceProductId])
+  @@index([localProductId])
+}
+
+model MarketplaceSyncLog {
+  id              String                @id @default(cuid())
+  provider        MarketplaceProvider
+  action          String
+  status          MarketplaceSyncStatus @default(PENDING)
+  message         String?
+  requestPayload  Json?
+  responsePayload Json?
+  startedAt       DateTime              @default(now())
+  finishedAt      DateTime?
+  createdAt       DateTime              @default(now())
+
+  @@index([provider, createdAt])
+}
+
+model MarketplaceWebhookEvent {
+  id           String                   @id @default(cuid())
+  provider     MarketplaceProvider
+  eventType    String
+  eventId      String?
+  payload      Json
+  signature    String?
+  status       MarketplaceWebhookStatus @default(RECEIVED)
+  processedAt  DateTime?
+  errorMessage String?
+  createdAt    DateTime                 @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, createdAt])
 }
 
 model Address {
-  id                 String   @id @default(cuid())
-  userId             String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label              String
-  recipientName      String
-  recipientPhone     String
-  detail             String
-  rajaongkirId       String
-  rajaongkirLabel    String
-  provinceName       String
-  cityName           String
-  districtName       String
-  subdistrictName    String?
-  zipCode            String?
-  isPrimary          Boolean  @default(false)
-  orders             Order[]
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label           String
+  recipientName   String
+  recipientPhone  String
+  detail          String
+  rajaongkirId    String
+  rajaongkirLabel String
+  provinceName    String
+  cityName        String
+  districtName    String
+  subdistrictName String?
+  zipCode         String?
+  isPrimary       Boolean  @default(false)
+  orders          Order[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([userId])
 }
@@ -139,19 +286,19 @@ model OrderItem {
 }
 
 model Payment {
-  id              String          @id @default(cuid())
-  orderId         String
-  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider        PaymentProvider
-  status          PaymentStatus   @default(UNPAID)
-  amount          Int
-  transactionId   String?
-  paymentToken    String?
-  paymentUrl      String?
-  rawResponse     Json?
-  paidAt          DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id            String          @id @default(cuid())
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      PaymentProvider
+  status        PaymentStatus   @default(UNPAID)
+  amount        Int
+  transactionId String?
+  paymentToken  String?
+  paymentUrl    String?
+  rawResponse   Json?
+  paidAt        DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Notification {
@@ -197,9 +344,9 @@ model CouponUsage {
   usedAt         DateTime @default(now())
   createdAt      DateTime @default(now())
 
+  @@unique([couponId, userId])
   @@index([couponId])
   @@index([userId])
-  @@unique([couponId, userId])
 }
 
 enum Role {
@@ -232,4 +379,32 @@ enum PaymentProvider {
 enum CouponType {
   PERCENT
   FIXED
+}
+
+enum OAuthProvider {
+  GOOGLE
+  TIKTOK
+}
+
+enum MarketplaceProvider {
+  TOKOPEDIA
+  TIKTOK_SHOP
+}
+
+enum MarketplaceMode {
+  MOCK
+  LIVE
+}
+
+enum MarketplaceSyncStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum MarketplaceWebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
 }
