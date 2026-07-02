@@ -49,6 +49,13 @@ export async function getOrdersController(req: Request, res: Response) {
         address: true,
         coupon: true,
         couponUsage: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -102,6 +109,13 @@ export async function getOrderDetailController(req: Request, res: Response) {
         address: true,
         coupon: true,
         couponUsage: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 

@@ -67,10 +67,10 @@ Generate Prisma Client:
 npm run prisma:generate
 ```
 
-Run migration:
+Synchronize the existing development database:
 
 ```bash
-npm run prisma:migrate -- --name add_oauth_marketplace
+npm run prisma:push
 ```
 
 Seed initial data:
@@ -82,8 +82,9 @@ npm run seed
 Seed includes:
 
 - Admin account
-- Categories
-- Products
+- Customer account
+- 8 fashion categories
+- 24 fashion products
 - Coupons
 
 Default admin:
@@ -91,6 +92,13 @@ Default admin:
 ```txt
 email: admin@nexxora.com
 password: admin123
+```
+
+Default customer:
+
+```txt
+email: user@nexxora.com
+password: user12345
 ```
 
 ## Development
@@ -172,7 +180,20 @@ Routes are grouped by domain inside `src/routers`:
 - Shipping
 - User
 - Notification
+- Admin request and admin reporting
 - ERP Marketplace
+
+New admin workflow routes:
+
+- `POST /api/admin-requests`
+- `GET /api/admin-requests/my-request`
+- `GET /api/admin/admin-requests`
+- `PATCH /api/admin/admin-requests/:id/approve`
+- `PATCH /api/admin/admin-requests/:id/reject`
+- `GET /api/admin/dashboard`
+- `GET /api/admin/transactions`
+- `PATCH /api/admin/orders/:id/status`
+- `POST /api/products/seed-fashion`
 
 The detailed route definitions live in the router files. This README intentionally avoids listing every public route to keep the repository documentation cleaner.
 

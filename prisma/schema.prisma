@@ -29,17 +29,20 @@ model User {
   couponUsages             CouponUsage[]
   notifications            Notification[]
   oauthAccounts            OAuthAccount[]
+  adminRequests            AdminRequest[]
   createdAt                DateTime       @default(now())
   updatedAt                DateTime       @updatedAt
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Product {
@@ -50,6 +53,17 @@ model Product {
   price                 Int
   stock                 Int
   image                 String
+  gallery               String[]               @default([])
+  overview              String?
+  material              String?
+  keyFeatures           String[]               @default([])
+  sizeGuide             String?
+  careInstructions      String?
+  warranty              String?
+  rating                Float                  @default(4.5)
+  sold                  Int                    @default(0)
+  tags                  String[]               @default([])
+  isFeatured            Boolean                @default(false)
   categoryId            String
   category              Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   cartItems             CartItem[]
@@ -311,6 +325,23 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model AdminRequest {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason     String
+  experience String
+  whatsapp   String
+  agreed     Boolean            @default(false)
+  status     AdminRequestStatus @default(PENDING)
+  adminNote  String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
 model Coupon {
   id          String        @id @default(cuid())
   code        String        @unique
@@ -352,6 +383,12 @@ model CouponUsage {
 enum Role {
   USER
   ADMIN
+}
+
+enum AdminRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum OrderStatus {

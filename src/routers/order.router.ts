@@ -13,6 +13,7 @@ const router = Router();
 
 router.use(verifyToken);
 router.get("/", getOrdersController);
+router.get("/my", getOrdersController);
 router.get("/:id", getOrderDetailController);
 router.post("/", checkoutOrderController);
 router.put("/:id/status", roleGuard(Role.ADMIN), updateOrderStatusController);

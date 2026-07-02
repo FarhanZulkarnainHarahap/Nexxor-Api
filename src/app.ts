@@ -14,6 +14,8 @@ import addressRouter from "./routers/address.router";
 import shippingRouter from "./routers/shipping.router";
 import userRouter from "./routers/user.router";
 import marketplaceRouter from "./routers/marketplace.router";
+import adminRequestRouter from "./routers/admin-request.router";
+import adminRouter from "./routers/admin.router";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 import { renderApiHome } from "./utils/apiHome";
 
@@ -71,6 +73,8 @@ app.use("/api/addresses", addressRouter);
 app.use("/api/shipping", shippingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/admin-requests", adminRequestRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

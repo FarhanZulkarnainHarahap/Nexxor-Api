@@ -5,6 +5,7 @@ import {
   deleteProductController,
   getProductDetailController,
   getProductsController,
+  seedFashionProductsController,
   updateProductController,
 } from "../controllers/product.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
@@ -15,6 +16,7 @@ const router = Router();
 
 router.get("/", getProductsController);
 router.get("/:slug", getProductDetailController);
+router.post("/seed-fashion", verifyToken, roleGuard(Role.ADMIN), seedFashionProductsController);
 router.post("/", verifyToken, roleGuard(Role.ADMIN), upload.single("image"), createProductController);
 router.put("/:id", verifyToken, roleGuard(Role.ADMIN), upload.single("image"), updateProductController);
 router.delete("/:id", verifyToken, roleGuard(Role.ADMIN), deleteProductController);
